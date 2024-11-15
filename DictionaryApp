@@ -1,0 +1,52 @@
+import java.io.*;
+import java.util.Scanner;
+
+public class DictionaryApp {
+    public static void main(String[] args) {
+        BPlusTree dictionary = new BPlusTree();
+        String filePath = "dictionary.csv";
+
+        // Validate and load the file
+        File file = new File(filePath);
+        if (!file.exists()) {
+            System.err.println("File not found: " + file.getAbsolutePath());
+            return;
+        } else {
+            System.out.println("File found: " + file.getAbsolutePath());
+        }
+
+        // Load words and meanings into the dictionary
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",", 2);
+                if (parts.length == 2) {
+                    String word = parts[0].trim().toLowerCase(); // Normalize to lowercase
+                    String meaning = parts[1].trim();
+                    dictionary.insert(word, meaning);
+                    System.out.println("Inserted: " + word + " -> " + meaning); // Debugging
+                } else {
+                    System.out.println("Skipping malformed line: " + line);
+                }
+            }
+            System.out.println("Dictionary loaded successfully.");
+        } catch (IOException e) {
+            System.err.println("Error reading the file: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+
+        // Allow user to search for words
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("\nEnter a word to find its meaning (or type 'exit' to quit): ");
+            String input = scanner.nextLine().trim().toLowerCase(); // Normalize input
+            if (input.equalsIgnoreCase("exit")) {
+                break;
+            }
+            String meaning = dictionary.search(input);
+            System.out.println("Meaning: " + meaning);
+        }
+        scanner.close();
+    }
+}
