@@ -1,0 +1,101 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class BPlusTree {
+    private static final int T = 3; // Minimum degree of the B+ Tree
+    private Node root;
+
+    private class Node {
+        boolean isLeaf;
+        List<String> keys;
+        List<Object> children;
+
+        Node(boolean isLeaf) {
+            this.isLeaf = isLeaf;
+            keys = new ArrayList<>();
+            children = new ArrayList<>();
+        }
+    }
+
+    public BPlusTree() {
+        root = new Node(true);
+    }
+
+    public String search(String key) {
+        System.out.println("Searching for: " + key);
+        return search(root, key);
+    }
+
+    private String search(Node node, String key) {
+        int i = 0;
+
+        // Traverse to the correct key or child
+        while (i < node.keys.size() && key.compareTo(node.keys.get(i)) > 0) {
+            i++;
+        }
+
+        if (node.isLeaf) {
+            // If at a leaf node, check for key match
+            if (i < node.keys.size() && node.keys.get(i).equals(key)) {
+                return (String) node.children.get(i);
+            } else {
+                return "Word not found.";
+            }
+        } else {
+            // Traverse the appropriate child
+            return search((Node) node.children.get(i), key);
+        }
+    }
+
+    public void insert(String key, String value) {
+        Node r = root;
+        if (r.keys.size() == 2 * T - 1) {
+            Node s = new Node(false);
+            root = s;
+            s.children.add(r);
+            splitChild(s, 0);
+            insertNonFull(s, key, value);
+        } else {
+            insertNonFull(r, key, value);
+        }
+    }
+
+    private void insertNonFull(Node node, String key, String value) {
+        int i = node.keys.size() - 1;
+
+        if (node.isLeaf) {
+            while (i >= 0 && key.compareTo(node.keys.get(i)) < 0) {
+                i--;
+            }
+            node.keys.add(i + 1, key);
+            node.children.add(i + 1, value);
+        } else {
+            while (i >= 0 && key.compareTo(node.keys.get(i)) < 0) {
+                i--;
+            }
+            i++;
+            Node child = (Node) node.children.get(i);
+            if (child.keys.size() == 2 * T - 1) {
+                splitChild(node, i);
+                if (key.compareTo(node.keys.get(i)) > 0) {
+                    i++;
+                }
+            }
+            insertNonFull((Node) node.children.get(i), key, value);
+        }
+    }
+
+    private void splitChild(Node parent, int i) {
+        Node child = (Node) parent.children.get(i);
+        Node sibling = new Node(child.isLeaf);
+
+        parent.keys.add(i, child.keys.get(T - 1));
+        parent.children.add(i + 1, sibling);
+
+        sibling.keys.addAll(child.keys.subList(T, child.keys.size()));
+        sibling.children.addAll(child.children.subList(T, child.children.size()));
+
+        child.keys.subList(T - 1, child.keys.size()).clear();
+        child.children.subList(T, child.children.size()).clear();
+    }
+}
